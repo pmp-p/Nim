@@ -327,8 +327,12 @@ else:
     # Anything higher is the time to wait in milliseconds.
     doAssert(timeout >= -1, "Cannot select with a negative value, got: " & $timeout)
 
-  when defined(linux) or defined(windows) or defined(macosx) or defined(bsd) or
-       defined(solaris) or defined(zephyr) or defined(freertos):
+  when (
+        defined(linux) or defined(windows) or defined(macosx) or defined(bsd) or
+        defined(zephyr) or defined(freertos)
+       ) and (
+        not defined(wasi) and not defined(emscripten)
+       ):
     template maxDescriptors*(): int =
       ## Returns the maximum number of active file descriptors for the current
       ## process. This involves a system call. For now `maxDescriptors` is
@@ -343,6 +347,10 @@ else:
         if res >= 0:
           res = int(fdLim.rlim_cur) - 1
         res
+  else:
+    template maxDescriptors*(): int =
+       65535
+
 
   when defined(linux) and not defined(emscripten):
     include ioselects/ioselectors_epoll
